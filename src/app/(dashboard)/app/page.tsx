@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useStore } from '@/lib/store'
 import { notesService } from '@/lib/notes'
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { Plus, Filter } from 'lucide-react'
 
-export default function DashboardPage() {
+function DashboardContent() {
     const [isLoading, setIsLoading] = useState(true)
     const searchParams = useSearchParams()
     const { user, notes, setNotes, filteredNotes, searchQuery } = useStore()
@@ -93,5 +93,17 @@ export default function DashboardPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function DashboardPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center h-64">
+                <LoadingSpinner size="lg" />
+            </div>
+        }>
+            <DashboardContent />
+        </Suspense>
     )
 }
