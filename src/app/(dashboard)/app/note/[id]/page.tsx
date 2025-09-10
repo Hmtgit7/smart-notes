@@ -59,6 +59,7 @@ export default function NotePage() {
                         content: '',
                         tags: [],
                         pinned: false,
+                        archived: false,
                         attachments: [],
                         version: 1,
                         isDeleted: false,
