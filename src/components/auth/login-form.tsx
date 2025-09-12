@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { authService } from '@/lib/auth'
-import { useStore } from '@/lib/store'
+import { useAuth } from '@/components/auth-provider'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 export function LoginForm() {
@@ -17,17 +16,16 @@ export function LoginForm() {
     const [error, setError] = useState('')
 
     const router = useRouter()
-    const setUser = useStore(state => state.setUser)
+    const { login } = useAuth()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
         setError('')
 
-        const result = await authService.login(email, password)
+        const result = await login(email, password)
 
-        if (result.success && result.user) {
-            setUser(result.user as any)
+        if (result.success) {
             router.push('/app')
         } else {
             setError(result.error || 'Login failed')

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useStore } from '@/lib/store'
-import { authService } from '@/lib/auth'
+import { useAuth } from '@/components/auth-provider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -22,8 +22,6 @@ import {
     Search,
     Grid3X3,
     List,
-    Moon,
-    Sun,
     Wifi,
     WifiOff,
     RefreshCw,
@@ -36,28 +34,21 @@ export function TopBar() {
     const router = useRouter()
     const {
         user,
-        setUser,
         searchQuery,
         setSearchQuery,
         view,
         setView,
-        theme,
-        setTheme,
         isOnline,
         syncStatus,
         pendingSyncs,
         sidebarOpen
     } = useStore()
+    const { logout } = useAuth()
 
     const handleLogout = async () => {
-        await authService.logout()
-        setUser(null)
-        router.push('/')
+        await logout()
     }
 
-    const toggleTheme = () => {
-        setTheme(theme === 'dark' ? 'light' : 'dark')
-    }
 
     return (
         <header className="bg-white border-b border-gray-200 px-6 py-4 w-full">
@@ -122,14 +113,6 @@ export function TopBar() {
                         )}
                     </div>
 
-                    {/* Theme Toggle */}
-                    <Button variant="ghost" size="icon" onClick={toggleTheme}>
-                        {theme === 'dark' ? (
-                            <Sun className="h-4 w-4" />
-                        ) : (
-                            <Moon className="h-4 w-4" />
-                        )}
-                    </Button>
 
                     {/* User Menu */}
                     <DropdownMenu>
@@ -138,7 +121,7 @@ export function TopBar() {
                                 <Avatar className="h-8 w-8">
                                     <AvatarImage src={user?.avatar} alt={user?.name} />
                                     <AvatarFallback>
-                                        {user?.name?.charAt(0).toUpperCase()}
+                                        {user?.name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
                                     </AvatarFallback>
                                 </Avatar>
                             </Button>
@@ -146,7 +129,7 @@ export function TopBar() {
                         <DropdownMenuContent className="w-56" align="end" forceMount>
                             <div className="flex items-center justify-start gap-2 p-2">
                                 <div className="flex flex-col space-y-1 leading-none">
-                                    <p className="font-medium">{user?.name}</p>
+                                    <p className="font-medium">{user?.name || 'User'}</p>
                                     <p className="w-[200px] truncate text-sm text-muted-foreground">
                                         {user?.email}
                                     </p>

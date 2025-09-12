@@ -1,18 +1,22 @@
-// import { Client, Account, Databases } from "appwrite";
-
-// const client = new Client()
-//   .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT)
-//   .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID);
-
-// const account = new Account(client);
-// const databases = new Databases(client);
-
-// export { client, account, databases };
 import { Client, Databases, Account, Storage, Functions } from "appwrite";
 
-// Provide fallback values for build time when env vars might be undefined
-const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1';
-const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || 'default-project';
+// Validate required environment variables
+const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
+const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
+const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
+
+if (!endpoint) {
+  console.error('NEXT_PUBLIC_APPWRITE_ENDPOINT is required');
+  throw new Error('Appwrite endpoint is not configured. Please check your environment variables.');
+}
+if (!projectId) {
+  console.error('NEXT_PUBLIC_APPWRITE_PROJECT_ID is required');
+  throw new Error('Appwrite project ID is not configured. Please check your environment variables.');
+}
+if (!databaseId) {
+  console.error('NEXT_PUBLIC_APPWRITE_DATABASE_ID is required');
+  throw new Error('Appwrite database ID is not configured. Please check your environment variables.');
+}
 
 const client = new Client()
   .setEndpoint(endpoint)
@@ -23,8 +27,8 @@ export const account = new Account(client);
 export const storage = new Storage(client);
 export const functions = new Functions(client);
 
-export const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || 'default-database';
-export const BUCKET_ID = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID || 'default-bucket';
+export const DATABASE_ID = databaseId;
+export const BUCKET_ID = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID;
 
 // Collection IDs
 export const COLLECTIONS = {

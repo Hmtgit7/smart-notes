@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { authService } from '@/lib/auth'
-import { useStore } from '@/lib/store'
+import { useAuth } from '@/components/auth-provider'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 export function SignupForm() {
@@ -19,7 +18,7 @@ export function SignupForm() {
     const [error, setError] = useState('')
 
     const router = useRouter()
-    const setUser = useStore(state => state.setUser)
+    const { signup } = useAuth()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -32,16 +31,21 @@ export function SignupForm() {
             return
         }
 
-        if (password.length < 8) {
-            setError('Password must be at least 8 characters long')
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters long')
             setIsLoading(false)
             return
         }
 
-        const result = await authService.signup(email, password, name)
+        if (name.trim().length < 2) {
+            setError('Name must be at least 2 characters long')
+            setIsLoading(false)
+            return
+        }
 
-        if (result.success && result.user) {
-            setUser(result.user as any)
+        const result = await signup(email, password, name)
+
+        if (result.success) {
             router.push('/app')
         } else {
             setError(result.error || 'Signup failed')

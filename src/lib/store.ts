@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { User, Note, AppState } from "@/types";
+import { notesService } from "./notes";
 import { authService } from "./auth";
 
 interface NotesStore extends AppState {
@@ -9,14 +10,13 @@ interface NotesStore extends AppState {
   setNotes: (notes: Note[]) => void;
   addNote: (note: Note) => void;
   updateNote: (id: string, updates: Partial<Note>) => void;
-  deleteNote: (id: string) => void;
-  togglePin: (id: string) => void;
-  toggleArchive: (id: string) => void;
+  deleteNote: (id: string) => Promise<void>;
+  togglePin: (id: string) => Promise<void>;
+  toggleArchive: (id: string) => Promise<void>;
   setCurrentNote: (note: Note | null) => void;
 
   // UI Actions
   setSidebarOpen: (open: boolean) => void;
-  setTheme: (theme: "light" | "dark" | "system") => void;
   setView: (view: "grid" | "list") => void;
   setSearchQuery: (query: string) => void;
   setSelectedTags: (tags: string[]) => void;
@@ -44,7 +44,6 @@ export const useStore = create<NotesStore>()(
       currentNote: null,
       selectedNotes: [],
       sidebarOpen: true,
-      theme: "system",
       view: "grid",
       isOnline: true,
       syncStatus: "idle",
@@ -85,50 +84,82 @@ export const useStore = create<NotesStore>()(
               : state.currentNote,
         })),
 
-      deleteNote: (id) =>
-        set((state) => ({
-          notes: state.notes.map((note) =>
-            note.$id === id
-              ? {
-                  ...note,
-                  isDeleted: true,
-                  updatedAt: new Date().toISOString(),
-                }
-              : note,
-          ),
-        })),
+      deleteNote: async (id) => {
+        try {
+          // Delete in Appwrite
+          const success = await notesService.deleteNote(id);
+          
+          if (success) {
+            // Update local state
+            set((state) => ({
+              notes: state.notes.map((note) =>
+                note.$id === id
+                  ? {
+                      ...note,
+                      isDeleted: true,
+                      updatedAt: new Date().toISOString(),
+                    }
+                  : note,
+              ),
+            }));
+          }
+        } catch (error) {
+          console.error('Error deleting note:', error);
+        }
+      },
 
-      togglePin: (id) =>
-        set((state) => ({
-          notes: state.notes.map((note) =>
-            note.$id === id
-              ? {
-                  ...note,
-                  pinned: !note.pinned,
-                  updatedAt: new Date().toISOString(),
-                }
-              : note,
-          ),
-        })),
+      togglePin: async (id) => {
+        const state = get();
+        const note = state.notes.find(n => n.$id === id);
+        if (!note) return;
 
-      toggleArchive: (id) =>
-        set((state) => ({
-          notes: state.notes.map((note) =>
-            note.$id === id
-              ? {
-                  ...note,
-                  archived: !note.archived,
-                  updatedAt: new Date().toISOString(),
-                }
-              : note,
-          ),
-        })),
+        try {
+          // Update in Appwrite
+          const updatedNote = await notesService.updateNote(id, { 
+            pinned: !note.pinned 
+          });
+          
+          if (updatedNote) {
+            // Update local state
+            set((state) => ({
+              notes: state.notes.map((note) =>
+                note.$id === id ? updatedNote : note,
+              ),
+            }));
+          }
+        } catch (error) {
+          console.error('Error toggling pin:', error);
+        }
+      },
+
+      toggleArchive: async (id) => {
+        const state = get();
+        const note = state.notes.find(n => n.$id === id);
+        if (!note) return;
+
+        try {
+          // Update in Appwrite
+          const updatedNote = await notesService.updateNote(id, { 
+            archived: !note.archived 
+          });
+          
+          if (updatedNote) {
+            // Update local state
+            set((state) => ({
+              notes: state.notes.map((note) =>
+                note.$id === id ? updatedNote : note,
+              ),
+            }));
+          }
+        } catch (error) {
+          console.error('Error toggling archive:', error);
+        }
+      },
 
       setCurrentNote: (note) => set({ currentNote: note }),
 
       // UI Actions
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
-      setTheme: (theme) => set({ theme }),
       setView: (view) => set({ view }),
       setSearchQuery: (query) => set({ searchQuery: query }),
       setSelectedTags: (tags) => set({ selectedTags: tags }),
@@ -207,7 +238,6 @@ export const useStore = create<NotesStore>()(
       name: "smart-notes-storage",
       partialize: (state) => ({
         user: state.user,
-        theme: state.theme,
         view: state.view,
         sidebarOpen: state.sidebarOpen,
       }),

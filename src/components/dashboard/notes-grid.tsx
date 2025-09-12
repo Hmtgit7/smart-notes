@@ -30,9 +30,9 @@ import { cn } from '@/lib/utils'
 
 interface NoteCardProps {
     note: Note
-    onPin: (id: string) => void
-    onDelete: (id: string) => void
-    onArchive: (id: string) => void
+    onPin: (id: string) => Promise<void>
+    onDelete: (id: string) => Promise<void>
+    onArchive: (id: string) => Promise<void>
 }
 
 function NoteCard({ note, onPin, onDelete, onArchive }: NoteCardProps) {
@@ -77,9 +77,9 @@ function NoteCard({ note, onPin, onDelete, onArchive }: NoteCardProps) {
                                 Edit Note
                             </DropdownMenuItem>
                             <DropdownMenuItem 
-                                onClick={(e) => {
+                                onClick={async (e) => {
                                     e.stopPropagation()
-                                    onPin(note.$id)
+                                    await onPin(note.$id)
                                 }}
                                 className="cursor-pointer"
                             >
@@ -87,9 +87,9 @@ function NoteCard({ note, onPin, onDelete, onArchive }: NoteCardProps) {
                                 {note.pinned ? 'Unpin' : 'Pin'} Note
                             </DropdownMenuItem>
                             <DropdownMenuItem 
-                                onClick={(e) => {
+                                onClick={async (e) => {
                                     e.stopPropagation()
-                                    onArchive(note.$id)
+                                    await onArchive(note.$id)
                                 }}
                                 className="cursor-pointer"
                             >
@@ -99,9 +99,9 @@ function NoteCard({ note, onPin, onDelete, onArchive }: NoteCardProps) {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                                 className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
-                                onClick={(e) => {
+                                onClick={async (e) => {
                                     e.stopPropagation()
-                                    onDelete(note.$id)
+                                    await onDelete(note.$id)
                                 }}
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
@@ -158,7 +158,6 @@ function NoteCard({ note, onPin, onDelete, onArchive }: NoteCardProps) {
 
 export function NotesGrid() {
     const { notes, filteredNotes, view, togglePin, deleteNote, toggleArchive } = useStore()
-    console.log('NotesGrid - notes:', notes.length, 'filtered:', filteredNotes().length)
     const displayNotes = filteredNotes()
 
     if (displayNotes.length === 0) {
@@ -220,9 +219,9 @@ export function NotesGrid() {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={(e) => {
+                                            <DropdownMenuItem onClick={async (e) => {
                                                 e.preventDefault()
-                                                togglePin(note.$id)
+                                                await togglePin(note.$id)
                                             }}>
                                                 <Star className="mr-2 h-4 w-4" />
                                                 {note.pinned ? 'Unpin' : 'Pin'} Note
@@ -230,9 +229,9 @@ export function NotesGrid() {
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem
                                                 className="text-red-600"
-                                                onClick={(e) => {
+                                                onClick={async (e) => {
                                                     e.preventDefault()
-                                                    deleteNote(note.$id)
+                                                    await deleteNote(note.$id)
                                                 }}
                                             >
                                                 <Trash2 className="mr-2 h-4 w-4" />

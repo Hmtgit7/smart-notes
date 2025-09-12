@@ -19,7 +19,7 @@ function DashboardContent() {
     const tag = searchParams.get('tag')
 
     useEffect(() => {
-        // Skip loading since we're using mock data
+        // Notes are loaded in the layout, just set loading to false
         setIsLoading(false)
     }, [])
 

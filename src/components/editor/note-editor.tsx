@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { extractTags } from '@/lib/utils'
-import { Pin, Tag as TagIcon, Calendar, Hash, Sparkles } from 'lucide-react'
+import { Pin, Tag as TagIcon, Calendar, Hash, Sparkles, Save } from 'lucide-react'
 import type { Note } from '@/types'
 import { formatDateTime } from '@/lib/utils'
 import { AIPanel } from './ai-panel'
@@ -15,9 +15,11 @@ import { AIPanel } from './ai-panel'
 interface NoteEditorProps {
     note: Note
     onChange: (updates: Partial<Note>) => void
+    onSave?: () => void
+    isSaving?: boolean
 }
 
-export function NoteEditor({ note, onChange }: NoteEditorProps) {
+export function NoteEditor({ note, onChange, onSave, isSaving }: NoteEditorProps) {
     const [title, setTitle] = useState(note.title)
     const [content, setContent] = useState(note.content)
     const [activeTab, setActiveTab] = useState('editor')
@@ -80,6 +82,18 @@ export function NoteEditor({ note, onChange }: NoteEditorProps) {
                     >
                         <Pin className="h-4 w-4" />
                     </Button>
+                    {onSave && (
+                        <Button
+                            variant="default"
+                            size="sm"
+                            onClick={onSave}
+                            disabled={isSaving}
+                            className="bg-blue-600 hover:bg-blue-700"
+                        >
+                            <Save className="h-4 w-4 mr-2" />
+                            {isSaving ? 'Saving...' : 'Save'}
+                        </Button>
+                    )}
                 </div>
 
                 {/* Metadata */}

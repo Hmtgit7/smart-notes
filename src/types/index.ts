@@ -3,8 +3,15 @@ export interface User {
   userId: string;
   name: string;
   email: string;
+  title?: string; // Add title field if required by collection
+  content?: string; // Add content field if required by collection
+  tags?: string[]; // Add tags field if required by collection
+  pinned?: boolean; // Add pinned field if required by collection
+  archived?: boolean; // Add archived field if required by collection
+  attachments?: string[]; // Add attachments field if required by collection
+  version?: number; // Add version field if required by collection
+  isDeleted?: boolean; // Add isDeleted field if required by collection
   avatar?: string;
-  theme: "light" | "dark" | "system";
   plan: "free" | "pro";
   createdAt: string;
   updatedAt: string;
@@ -69,7 +76,6 @@ export interface AppState {
 
   // UI State
   sidebarOpen: boolean;
-  theme: "light" | "dark" | "system";
   view: "grid" | "list";
 
   // Sync & Offline

@@ -26,6 +26,7 @@ export default function AuthPage() {
                     </p>
                 </div>
 
+
                 {/* Auth Forms */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -51,6 +52,7 @@ export default function AuthPage() {
                         ← Back to home
                     </Link>
                 </div>
+
             </div>
         </div>
     )

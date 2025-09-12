@@ -35,9 +35,12 @@ export default function NotePage() {
     const debouncedSave = debounce(async (noteId: string, updates: Partial<Note>) => {
         setIsSaving(true)
         try {
-            // For mock data, just update the store
-            updateStoreNote(noteId, updates)
-            console.log('Note saved (mock):', updates)
+            // Save to Appwrite
+            const savedNote = await notesService.updateNote(noteId, updates)
+            if (savedNote) {
+                // Update the store with the saved note
+                updateStoreNote(noteId, savedNote)
+            }
         } catch (error) {
             console.error('Error saving note:', error)
         } finally {
@@ -51,22 +54,16 @@ export default function NotePage() {
 
             try {
                 if (id === 'new') {
-                    // Create new note with mock data
-                    const newNote: Note = {
-                        $id: 'new-note-' + Date.now(),
-                        userId: user.userId,
-                        title: 'Untitled Note',
-                        content: '',
-                        tags: [],
-                        pinned: false,
-                        archived: false,
-                        attachments: [],
-                        version: 1,
-                        isDeleted: false,
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString(),
-                    }
+                    // Create new note using Appwrite service
+                    const newNote = await notesService.createNote(
+                        user.userId,
+                        'Untitled Note',
+                        ''
+                    )
                     setNote(newNote)
+                    // Add new note to store
+                    const { addNote } = useStore.getState()
+                    addNote(newNote)
                     // Replace URL without triggering navigation
                     window.history.replaceState({}, '', `/app/note/${newNote.$id}`)
                 } else {
@@ -97,6 +94,22 @@ export default function NotePage() {
 
         // Auto-save after user stops typing
         debouncedSave(note.$id, updates)
+    }
+
+    const handleManualSave = async () => {
+        if (!note) return
+        
+        setIsSaving(true)
+        try {
+            const savedNote = await notesService.updateNote(note.$id, note)
+            if (savedNote) {
+                updateStoreNote(note.$id, savedNote)
+            }
+        } catch (error) {
+            console.error('Error manually saving note:', error)
+        } finally {
+            setIsSaving(false)
+        }
     }
 
     const handleBack = () => {
@@ -155,7 +168,12 @@ export default function NotePage() {
 
             {/* Editor */}
             <div className="flex-1 overflow-hidden">
-                <NoteEditor note={note} onChange={handleNoteChange} />
+                <NoteEditor 
+                    note={note} 
+                    onChange={handleNoteChange} 
+                    onSave={handleManualSave}
+                    isSaving={isSaving}
+                />
             </div>
         </div>
     )

@@ -4,6 +4,21 @@ import type { Note } from "@/types";
 import { db } from "./db";
 import { generateId, extractTags } from "./utils";
 
+// Helper function to validate and sanitize note data according to Appwrite schema
+function sanitizeNoteData(data: any): any {
+  return {
+    userId: String(data.userId || '').substring(0, 255),
+    title: String(data.title || 'Untitled').substring(0, 500),
+    content: String(data.content || '').substring(0, 10000),
+    tags: Array.isArray(data.tags) ? data.tags : [],
+    pinned: Boolean(data.pinned),
+    archived: Boolean(data.archived),
+    attachments: Array.isArray(data.attachments) ? data.attachments : [],
+    version: Number(data.version) || 1,
+    isDeleted: Boolean(data.isDeleted),
+  };
+}
+
 export class NotesService {
   async createNote(
     userId: string,
@@ -11,7 +26,7 @@ export class NotesService {
     content: string = "",
   ): Promise<Note> {
     const tags = extractTags(content);
-    const noteData = {
+    const noteData = sanitizeNoteData({
       userId,
       title: title || "Untitled",
       content,
@@ -21,7 +36,7 @@ export class NotesService {
       attachments: [],
       version: 1,
       isDeleted: false,
-    };
+    });
 
     try {
       // Try to create online first
@@ -36,7 +51,6 @@ export class NotesService {
       await db.saveNote(note);
       return note;
     } catch (error) {
-      console.log("Creating note offline:", error);
       // Create offline note
       const offlineNote: Note = {
         $id: generateId(),
@@ -55,15 +69,12 @@ export class NotesService {
     noteId: string,
     updates: Partial<Note>,
   ): Promise<Note | null> {
-    const updatedData = {
-      ...updates,
-      updatedAt: new Date().toISOString(),
-    };
-
     // Extract tags if content was updated
     if (updates.content) {
-      updatedData.tags = extractTags(updates.content);
+      updates.tags = extractTags(updates.content);
     }
+
+    const updatedData = sanitizeNoteData(updates);
 
     try {
       // Try to update online first
@@ -78,7 +89,6 @@ export class NotesService {
       await db.saveNote(note);
       return note;
     } catch (error) {
-      console.log("Updating note offline:", error);
       // Update offline note
       const existingNote = await db.notes.where("$id").equals(noteId).first();
       if (existingNote) {
@@ -118,6 +128,8 @@ export class NotesService {
   }
 
   async getNotes(userId: string): Promise<Note[]> {
+    let onlineNotes: Note[] = [];
+    
     try {
       // Try to get online notes first
       const response = await databases.listDocuments(
@@ -130,20 +142,35 @@ export class NotesService {
         ],
       );
 
-      const onlineNotes = response.documents as unknown as Note[];
+      onlineNotes = response.documents as unknown as Note[];
 
       // Save to offline DB
       for (const note of onlineNotes) {
         await db.saveNote(note);
         await db.markSynced(note.$id);
       }
-
-      return onlineNotes;
     } catch (error) {
-      console.log("Getting notes offline:", error);
-      // Get offline notes
-      return await db.getNotes(userId);
+      // Online notes failed, continue with offline notes
     }
+
+    // Always get offline notes as well
+    const offlineNotes = await db.getNotes(userId);
+    
+    // Merge online and offline notes, removing duplicates
+    const allNotes = [...onlineNotes];
+    const onlineNoteIds = new Set(onlineNotes.map(note => note.$id));
+    
+    // Add offline notes that aren't already in online notes
+    for (const offlineNote of offlineNotes) {
+      if (!onlineNoteIds.has(offlineNote.$id)) {
+        allNotes.push(offlineNote);
+      }
+    }
+    
+    // Sort by updatedAt descending
+    return allNotes.sort((a, b) => 
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
   }
 
   async syncNotes(userId: string): Promise<void> {
