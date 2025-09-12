@@ -74,9 +74,17 @@ export class NotesService {
       updates.tags = extractTags(updates.content);
     }
 
-    const updatedData = sanitizeNoteData(updates);
-
     try {
+      // Get existing note first to merge with updates
+      const existingNote = await db.notes.where("$id").equals(noteId).first();
+      if (!existingNote) {
+        return null;
+      }
+
+      // Merge existing note with updates
+      const mergedData = { ...existingNote, ...updates };
+      const updatedData = sanitizeNoteData(mergedData);
+
       // Try to update online first
       const note = (await databases.updateDocument(
         DATABASE_ID,
@@ -92,6 +100,8 @@ export class NotesService {
       // Update offline note
       const existingNote = await db.notes.where("$id").equals(noteId).first();
       if (existingNote) {
+        const mergedData = { ...existingNote, ...updates };
+        const updatedData = sanitizeNoteData(mergedData);
         const updatedNote = { ...existingNote, ...updatedData };
         await db.saveNote(updatedNote);
         await db.addToSyncQueue("update", noteId, updatedData);

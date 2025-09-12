@@ -58,7 +58,6 @@ export function Sidebar() {
   const recentNotes = notes
     .filter(note => !note.isDeleted)
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    .slice(0, 5)
   
   // Show filtered notes when searching, otherwise show recent notes
   const displayNotes = sidebarSearchQuery ? sidebarFilteredNotes() : recentNotes
@@ -86,7 +85,7 @@ export function Sidebar() {
 
       {/* User Info */}
       {sidebarOpen && user && (
-        <div className="p-4 border-b border-border">
+        <div className="p-7 border-b border-border">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
               <span className="text-white text-sm font-medium">
@@ -122,7 +121,7 @@ export function Sidebar() {
       )}
 
       {/* Quick Actions */}
-      <div className="p-4 border-b border-border">
+      <div className="px-4 py-7 border-b border-border">
         <Button
           onClick={handleNewNote}
           className="w-full bg-primary-500 hover:bg-primary-600 text-white"
@@ -140,7 +139,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         <nav className="p-4 space-y-2">
           {/* Main Navigation */}
           <div className="space-y-1">
