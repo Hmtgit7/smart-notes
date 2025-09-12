@@ -79,7 +79,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
     initializeAuth()
   }, [setUser])
 
-  // Note: Removed window focus listener to prevent auth checks on tab switching
+  // Add session refresh mechanism
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+
+    // Refresh session every 30 minutes to keep it alive
+    const refreshInterval = setInterval(async () => {
+      try {
+        const refreshed = await authService.refreshSession();
+        if (!refreshed) {
+          // Session is invalid, clear user state
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Session refresh failed:', error);
+        setUser(null);
+      }
+    }, 30 * 60 * 1000); // 30 minutes
+
+    return () => clearInterval(refreshInterval);
+  }, [isAuthenticated, user, setUser]);
 
   const login = async (email: string, password: string) => {
     try {

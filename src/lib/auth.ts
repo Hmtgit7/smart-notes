@@ -2,6 +2,64 @@ import { account, databases, COLLECTIONS, DATABASE_ID } from "./appwrite";
 import { AppwriteException, ID, Query } from "appwrite";
 import type { User } from "@/types";
 
+// Session persistence utilities
+const SESSION_STORAGE_KEY = 'smart_notes_session';
+const SESSION_EXPIRY_KEY = 'smart_notes_session_expiry';
+const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+interface SessionData {
+  userId: string;
+  email: string;
+  name: string;
+  timestamp: number;
+}
+
+// Helper functions for session persistence
+const saveSessionToStorage = (sessionData: SessionData) => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionData));
+      localStorage.setItem(SESSION_EXPIRY_KEY, (Date.now() + SESSION_DURATION).toString());
+    } catch (error) {
+      console.warn('Failed to save session to localStorage:', error);
+    }
+  }
+};
+
+const getSessionFromStorage = (): SessionData | null => {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const sessionData = localStorage.getItem(SESSION_STORAGE_KEY);
+    const expiryTime = localStorage.getItem(SESSION_EXPIRY_KEY);
+    
+    if (!sessionData || !expiryTime) return null;
+    
+    const expiry = parseInt(expiryTime);
+    if (Date.now() > expiry) {
+      // Session expired, clear storage
+      clearSessionFromStorage();
+      return null;
+    }
+    
+    return JSON.parse(sessionData);
+  } catch (error) {
+    console.warn('Failed to get session from localStorage:', error);
+    return null;
+  }
+};
+
+const clearSessionFromStorage = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+      localStorage.removeItem(SESSION_EXPIRY_KEY);
+    } catch (error) {
+      console.warn('Failed to clear session from localStorage:', error);
+    }
+  }
+};
+
 // Simple rate limiter to prevent excessive API calls
 class RateLimiter {
   private attempts: Map<string, number[]> = new Map();
@@ -74,6 +132,15 @@ export class AuthService {
       }
       
       await account.createEmailSession(email, password);
+
+      // Get account data and save session to localStorage
+      const accountData = await account.get();
+      saveSessionToStorage({
+        userId: accountData.$id,
+        email: accountData.email,
+        name: accountData.name,
+        timestamp: Date.now()
+      });
 
       // Create user document in database
       const user = await databases.createDocument(
@@ -150,6 +217,14 @@ export class AuthService {
       
       const accountData = await account.get();
       console.log('Account data retrieved:', { id: accountData.$id, email: accountData.email, name: accountData.name });
+
+      // Save session data to localStorage for persistence
+      saveSessionToStorage({
+        userId: accountData.$id,
+        email: accountData.email,
+        name: accountData.name,
+        timestamp: Date.now()
+      });
 
       // Get user document - if it doesn't exist, create it
       let users;
@@ -292,15 +367,18 @@ export class AuthService {
   async logout() {
     try {
       await account.deleteSession("current");
+      clearSessionFromStorage(); // Clear localStorage session data
       return { success: true };
     } catch (error) {
       console.error("Logout error:", error);
+      clearSessionFromStorage(); // Clear localStorage even if logout fails
       return { success: false, error: "Failed to logout" };
     }
   }
 
   async getCurrentUser(): Promise<User | null> {
     try {
+      // First try to get current session from Appwrite
       const accountData = await account.get();
 
       const users = await databases.listDocuments(
@@ -319,6 +397,14 @@ export class AuthService {
           userData.name = accountData.name || "User";
         }
         
+        // Update localStorage with fresh session data
+        saveSessionToStorage({
+          userId: accountData.$id,
+          email: accountData.email,
+          name: accountData.name,
+          timestamp: Date.now()
+        });
+        
         return userData;
       } else {
         // User is authenticated but no profile exists - create one
@@ -336,6 +422,15 @@ export class AuthService {
               updatedAt: new Date().toISOString(),
             },
           );
+          
+          // Save session data to localStorage
+          saveSessionToStorage({
+            userId: accountData.$id,
+            email: accountData.email,
+            name: accountData.name,
+            timestamp: Date.now()
+          });
+          
           return userDoc as unknown as User;
         } catch (createError) {
           console.error("Error creating user document:", createError);
@@ -343,8 +438,37 @@ export class AuthService {
         }
       }
     } catch (error) {
-      // If user is not authenticated, this is expected - return null
+      // If user is not authenticated, check localStorage for persisted session
       if (error instanceof AppwriteException && error.code === 401) {
+        const sessionData = getSessionFromStorage();
+        if (sessionData) {
+          console.log('Found persisted session, attempting to restore user data');
+          try {
+            // Try to get user data from database using stored userId
+            const users = await databases.listDocuments(
+              DATABASE_ID,
+              COLLECTIONS.USERS,
+              [Query.equal("userId", sessionData.userId)],
+            );
+
+            if (users.documents.length > 0) {
+              const userData = users.documents[0] as unknown as User;
+              
+              // Ensure the name field is properly set
+              if (!userData.name && userData.title) {
+                userData.name = userData.title;
+              } else if (!userData.name) {
+                userData.name = sessionData.name || "User";
+              }
+              
+              return userData;
+            }
+          } catch (dbError) {
+            console.error("Error fetching user from database:", dbError);
+            // Clear invalid session data
+            clearSessionFromStorage();
+          }
+        }
         return null;
       }
       console.error("Error getting current user:", error);
@@ -364,6 +488,37 @@ export class AuthService {
     } catch (error) {
       console.error("Update profile error:", error);
       return { success: false, error: "Failed to update profile" };
+    }
+  }
+
+  // Method to check if there's a valid persisted session
+  async hasValidPersistedSession(): Promise<boolean> {
+    const sessionData = getSessionFromStorage();
+    if (!sessionData) return false;
+    
+    try {
+      // Try to validate the session by checking if we can get user data
+      const users = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTIONS.USERS,
+        [Query.equal("userId", sessionData.userId)],
+      );
+      return users.documents.length > 0;
+    } catch (error) {
+      console.error("Error validating persisted session:", error);
+      clearSessionFromStorage(); // Clear invalid session
+      return false;
+    }
+  }
+
+  // Method to refresh session data
+  async refreshSession(): Promise<boolean> {
+    try {
+      const currentUser = await this.getCurrentUser();
+      return currentUser !== null;
+    } catch (error) {
+      console.error("Error refreshing session:", error);
+      return false;
     }
   }
 }
