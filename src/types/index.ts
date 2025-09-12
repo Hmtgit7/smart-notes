@@ -85,6 +85,8 @@ export interface AppState {
 
   // Search & Filters
   searchQuery: string;
+  sidebarSearchQuery: string;
+  navSearchQuery: string;
   selectedTags: string[];
   showDeleted: boolean;
 }

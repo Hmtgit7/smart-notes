@@ -37,9 +37,9 @@ export function Sidebar() {
     sidebarOpen, 
     setSidebarOpen, 
     notes, 
-    filteredNotes,
-    setSearchQuery,
-    searchQuery,
+    sidebarFilteredNotes,
+    setSidebarSearchQuery,
+    sidebarSearchQuery,
     setView,
     view
   } = useStore()
@@ -59,6 +59,9 @@ export function Sidebar() {
     .filter(note => !note.isDeleted)
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 5)
+  
+  // Show filtered notes when searching, otherwise show recent notes
+  const displayNotes = sidebarSearchQuery ? sidebarFilteredNotes() : recentNotes
 
     return (
     <div className={`bg-white border-r border-gray-200 flex flex-col transition-all duration-300 fixed left-0 top-0 h-full z-40 ${
@@ -110,8 +113,8 @@ export function Sidebar() {
             <input
               type="text"
               placeholder="Search notes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={sidebarSearchQuery}
+              onChange={(e) => setSidebarSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
@@ -178,14 +181,14 @@ export function Sidebar() {
             </Button>
           </div>
 
-          {/* Recent Notes */}
-          {sidebarOpen && recentNotes.length > 0 && (
+          {/* Recent Notes / Search Results */}
+          {sidebarOpen && displayNotes.length > 0 && (
             <div className="mt-6">
               <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
-                Recent
+                {sidebarSearchQuery ? 'Search Results' : 'Recent'}
               </h3>
               <div className="space-y-1">
-                {recentNotes.map((note) => (
+                {displayNotes.map((note) => (
                   <div
                     key={note.$id}
                     className="group relative flex items-center hover:bg-gray-50 rounded-md transition-colors"

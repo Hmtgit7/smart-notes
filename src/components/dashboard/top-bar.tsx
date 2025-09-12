@@ -34,8 +34,8 @@ export function TopBar() {
     const router = useRouter()
     const {
         user,
-        searchQuery,
-        setSearchQuery,
+        navSearchQuery,
+        setNavSearchQuery,
         view,
         setView,
         isOnline,
@@ -60,8 +60,8 @@ export function TopBar() {
                         <Input
                             type="text"
                             placeholder="Search notes..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            value={navSearchQuery}
+                            onChange={(e) => setNavSearchQuery(e.target.value)}
                             className="pl-10 pr-4"
                         />
                     </div>

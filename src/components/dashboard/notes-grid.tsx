@@ -156,9 +156,13 @@ function NoteCard({ note, onPin, onDelete, onArchive }: NoteCardProps) {
     )
 }
 
-export function NotesGrid() {
-    const { notes, filteredNotes, view, togglePin, deleteNote, toggleArchive } = useStore()
-    const displayNotes = filteredNotes()
+interface NotesGridProps {
+    notes?: Note[]
+}
+
+export function NotesGrid({ notes: propNotes }: NotesGridProps = {}) {
+    const { notes: storeNotes, view, togglePin, deleteNote, toggleArchive } = useStore()
+    const displayNotes = propNotes || storeNotes.filter(note => !note.isDeleted && !note.archived)
 
     if (displayNotes.length === 0) {
         return (

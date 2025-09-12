@@ -13,7 +13,7 @@ import { Plus, Filter } from 'lucide-react'
 function DashboardContent() {
     const [isLoading, setIsLoading] = useState(true)
     const searchParams = useSearchParams()
-    const { user, notes, setNotes, filteredNotes, searchQuery } = useStore()
+    const { user, notes, setNotes, filteredNotes, navSearchQuery } = useStore()
 
     const filter = searchParams.get('filter')
     const tag = searchParams.get('tag')
@@ -23,34 +23,55 @@ function DashboardContent() {
         setIsLoading(false)
     }, [])
 
-    // Apply filters based on URL params
+    // Apply filters based on URL params and nav search
     const getFilteredNotes = () => {
-        let filtered = filteredNotes()
+        let filtered = notes.filter(note => !note.isDeleted)
 
+        // Apply page-specific filters first
         if (filter === 'pinned') {
             filtered = filtered.filter(note => note.pinned && !note.isDeleted)
         } else if (filter === 'trash') {
             filtered = filtered.filter(note => note.isDeleted)
         } else if (filter === 'archived') {
             filtered = filtered.filter(note => note.archived && !note.isDeleted)
+        } else {
+            // Default: filter out archived notes
+            filtered = filtered.filter(note => !note.archived)
         }
 
+        // Apply tag filter
         if (tag) {
             filtered = filtered.filter(note => note.tags.includes(tag))
         }
 
-        return filtered
+        // Apply nav search query
+        if (navSearchQuery) {
+            const query = navSearchQuery.toLowerCase()
+            filtered = filtered.filter(
+                note =>
+                    note.title.toLowerCase().includes(query) ||
+                    note.content.toLowerCase().includes(query) ||
+                    note.tags.some(tag => tag.toLowerCase().includes(query))
+            )
+        }
+
+        // Sort by pinned first, then by updated date
+        return filtered.sort((a, b) => {
+            if (a.pinned && !b.pinned) return -1
+            if (!a.pinned && b.pinned) return 1
+            return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        })
     }
 
     const displayNotes = getFilteredNotes()
 
     const getPageTitle = () => {
-        if (filter === 'pinned') return 'Pinned Notes'
-        if (filter === 'trash') return 'Trash'
-        if (filter === 'archived') return 'Archived Notes'
+        if (filter === 'pinned') return navSearchQuery ? `Pinned Notes - Search: ${navSearchQuery}` : 'Pinned Notes'
+        if (filter === 'trash') return navSearchQuery ? `Trash - Search: ${navSearchQuery}` : 'Trash'
+        if (filter === 'archived') return navSearchQuery ? `Archived Notes - Search: ${navSearchQuery}` : 'Archived Notes'
         if (filter === 'tags') return 'All Tags'
-        if (tag) return `Tagged: ${tag}`
-        if (searchQuery) return `Search: ${searchQuery}`
+        if (tag) return navSearchQuery ? `Tagged: ${tag} - Search: ${navSearchQuery}` : `Tagged: ${tag}`
+        if (navSearchQuery) return `Search: ${navSearchQuery}`
         return 'All Notes'
     }
 
@@ -71,7 +92,7 @@ function DashboardContent() {
                         <h1 className="text-2xl font-bold text-gray-900">{getPageTitle()}</h1>
                         <p className="text-sm text-gray-600 mt-1">
                             {displayNotes.length} {displayNotes.length === 1 ? 'note' : 'notes'}
-                            {searchQuery && ` found for "${searchQuery}"`}
+                            {navSearchQuery && ` found for "${navSearchQuery}"`}
                         </p>
                     </div>
 
@@ -89,7 +110,7 @@ function DashboardContent() {
             {/* Notes Content */}
             <div className="flex-1 overflow-auto">
                 <div className="p-6">
-                    <NotesGrid />
+                    <NotesGrid notes={displayNotes} />
                 </div>
             </div>
         </div>

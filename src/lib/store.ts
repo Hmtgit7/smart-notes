@@ -19,6 +19,8 @@ interface NotesStore extends AppState {
   setSidebarOpen: (open: boolean) => void;
   setView: (view: "grid" | "list") => void;
   setSearchQuery: (query: string) => void;
+  setSidebarSearchQuery: (query: string) => void;
+  setNavSearchQuery: (query: string) => void;
   setSelectedTags: (tags: string[]) => void;
 
   // Sync Actions
@@ -29,6 +31,8 @@ interface NotesStore extends AppState {
 
   // Computed getters
   filteredNotes: () => Note[];
+  sidebarFilteredNotes: () => Note[];
+  navFilteredNotes: () => Note[];
   pinnedNotes: () => Note[];
   recentNotes: () => Note[];
   allTags: () => string[];
@@ -49,6 +53,8 @@ export const useStore = create<NotesStore>()(
       syncStatus: "idle",
       pendingSyncs: 0,
       searchQuery: "",
+      sidebarSearchQuery: "",
+      navSearchQuery: "",
       selectedTags: [],
       showDeleted: false,
 
@@ -162,6 +168,8 @@ export const useStore = create<NotesStore>()(
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
       setView: (view) => set({ view }),
       setSearchQuery: (query) => set({ searchQuery: query }),
+      setSidebarSearchQuery: (query) => set({ sidebarSearchQuery: query }),
+      setNavSearchQuery: (query) => set({ navSearchQuery: query }),
       setSelectedTags: (tags) => set({ selectedTags: tags }),
 
       // Sync Actions
@@ -182,6 +190,7 @@ export const useStore = create<NotesStore>()(
         // Filter out archived notes by default (unless specifically viewing archived)
         filtered = filtered.filter((note) => !note.archived);
 
+        // Use the main search query (for backward compatibility and main content filtering)
         if (state.searchQuery) {
           const query = state.searchQuery.toLowerCase();
           filtered = filtered.filter(
@@ -195,6 +204,63 @@ export const useStore = create<NotesStore>()(
         if (state.selectedTags.length > 0) {
           filtered = filtered.filter((note) =>
             note.tags.some((tag) => state.selectedTags.includes(tag)),
+          );
+        }
+
+        return filtered.sort((a, b) => {
+          if (a.pinned && !b.pinned) return -1;
+          if (!a.pinned && b.pinned) return 1;
+          return (
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          );
+        });
+      },
+
+      // Sidebar filtered notes (uses sidebar search query)
+      sidebarFilteredNotes: () => {
+        const state = get();
+        let filtered = state.notes.filter(
+          (note) => !note.isDeleted || state.showDeleted,
+        );
+
+        // Filter out archived notes by default
+        filtered = filtered.filter((note) => !note.archived);
+
+        // Use sidebar search query
+        if (state.sidebarSearchQuery) {
+          const query = state.sidebarSearchQuery.toLowerCase();
+          filtered = filtered.filter(
+            (note) =>
+              note.title.toLowerCase().includes(query) ||
+              note.content.toLowerCase().includes(query) ||
+              note.tags.some((tag) => tag.toLowerCase().includes(query)),
+          );
+        }
+
+        return filtered.sort((a, b) => {
+          if (a.pinned && !b.pinned) return -1;
+          if (!a.pinned && b.pinned) return 1;
+          return (
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          );
+        });
+      },
+
+      // Navigation filtered notes (uses nav search query for page-specific filtering)
+      navFilteredNotes: () => {
+        const state = get();
+        let filtered = state.notes.filter(
+          (note) => !note.isDeleted || state.showDeleted,
+        );
+
+        // Use nav search query for page-specific filtering
+        if (state.navSearchQuery) {
+          const query = state.navSearchQuery.toLowerCase();
+          filtered = filtered.filter(
+            (note) =>
+              note.title.toLowerCase().includes(query) ||
+              note.content.toLowerCase().includes(query) ||
+              note.tags.some((tag) => tag.toLowerCase().includes(query)),
           );
         }
 
