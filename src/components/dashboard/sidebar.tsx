@@ -205,14 +205,14 @@ export function Sidebar() {
                   >
                     <Button
                       variant="ghost"
-                      className="w-full justify-start text-left h-auto p-2 flex-1"
+                      className="w-full justify-start text-left h-auto p-2 flex-1 min-w-0"
                       onClick={() => router.push(`/app/note/${note.$id}`)}
                     >
                       <FileText className="h-4 w-4 mr-3 flex-shrink-0" />
-                      <span className="truncate text-sm">{note.title}</span>
+                      <span className="truncate text-sm min-w-0 pr-12">{note.title}</span>
                     </Button>
                     
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-1 flex-shrink-0">
                       <Button
                         variant="ghost"
                         size="icon"
