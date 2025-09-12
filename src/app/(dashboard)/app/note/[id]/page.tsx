@@ -104,6 +104,8 @@ export default function NotePage() {
             const savedNote = await notesService.updateNote(note.$id, note)
             if (savedNote) {
                 updateStoreNote(note.$id, savedNote)
+                // Navigate to notes list after successful save
+                router.push('/app')
             }
         } catch (error) {
             console.error('Error manually saving note:', error)

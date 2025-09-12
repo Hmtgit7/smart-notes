@@ -1,18 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useStore } from '@/lib/store'
 import { authService } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { 
   Home, 
   Search, 
@@ -26,12 +19,13 @@ import {
   Archive,
   Trash2,
   Edit3,
-  MoreVertical
 } from 'lucide-react'
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
-    const router = useRouter()
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { 
     user, 
     sidebarOpen, 
@@ -54,6 +48,23 @@ export function Sidebar() {
     router.push('/app/note/new')
   }
 
+  // Helper functions to determine active state
+  const isAllNotesActive = () => {
+    return (pathname === '/app' && !searchParams.get('filter')) || pathname.startsWith('/app/note/')
+  }
+
+  const isPinnedActive = () => {
+    return pathname === '/app' && searchParams.get('filter') === 'pinned'
+  }
+
+  const isArchivedActive = () => {
+    return pathname === '/app' && searchParams.get('filter') === 'archived'
+  }
+
+  const isSettingsActive = () => {
+    return pathname === '/app/settings'
+  }
+
   const pinnedNotes = notes.filter(note => note.pinned && !note.isDeleted)
   const recentNotes = notes
     .filter(note => !note.isDeleted)
@@ -62,7 +73,7 @@ export function Sidebar() {
   // Show filtered notes when searching, otherwise show recent notes
   const displayNotes = sidebarSearchQuery ? sidebarFilteredNotes() : recentNotes
 
-    return (
+  return (
     <div className={`bg-white border-r border-border flex flex-col transition-all duration-300 fixed left-0 top-0 h-full z-40 ${
       sidebarOpen ? 'w-64' : 'w-16'
     }`}>
@@ -145,19 +156,19 @@ export function Sidebar() {
           <div className="space-y-1">
             <Button
               variant="ghost"
-              className="w-full justify-start"
+              className={`w-full justify-start ${isAllNotesActive() ? 'bg-primary-50 text-primary-600 border-r-2 border-primary-500' : ''}`}
               onClick={() => router.push('/app')}
             >
-              <Home className="h-4 w-4 mr-3" />
+              <Home className={`h-4 w-4 mr-3 ${isAllNotesActive() ? 'text-primary-600' : ''}`} />
               {sidebarOpen && 'All Notes'}
             </Button>
             
             <Button
               variant="ghost"
-              className="w-full justify-start"
+              className={`w-full justify-start ${isPinnedActive() ? 'bg-primary-50 text-primary-600 border-r-2 border-primary-500' : ''}`}
               onClick={() => router.push('/app?filter=pinned')}
             >
-              <Star className="h-4 w-4 mr-3" />
+              <Star className={`h-4 w-4 mr-3 ${isPinnedActive() ? 'text-primary-600' : ''}`} />
               {sidebarOpen && (
                 <>
                   Pinned
@@ -172,10 +183,10 @@ export function Sidebar() {
             
             <Button
               variant="ghost"
-              className="w-full justify-start"
+              className={`w-full justify-start ${isArchivedActive() ? 'bg-primary-50 text-primary-600 border-r-2 border-primary-500' : ''}`}
               onClick={() => router.push('/app?filter=archived')}
             >
-              <Archive className="h-4 w-4 mr-3" />
+              <Archive className={`h-4 w-4 mr-3 ${isArchivedActive() ? 'text-primary-600' : ''}`} />
               {sidebarOpen && 'Archived'}
             </Button>
           </div>
@@ -201,44 +212,32 @@ export function Sidebar() {
                       <span className="truncate text-sm">{note.title}</span>
                     </Button>
                     
-                    {/* Hover Actions */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-1 top-1/2 transform -translate-y-1/2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 hover:bg-gray-200"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreVertical className="h-3 w-3" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem 
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              router.push(`/app/note/${note.$id}`)
-                            }}
-                            className="cursor-pointer"
-                          >
-                            <Edit3 className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              // Add delete functionality here
-                              console.log('Delete note:', note.$id)
-                            }}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:bg-gray-200"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          router.push(`/app/note/${note.$id}`)
+                        }}
+                        title="Edit note"
+                      >
+                        <Edit3 className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:bg-red-100 text-red-600 hover:text-red-700"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          // Add delete functionality here
+                          console.log('Delete note:', note.$id)
+                        }}
+                        title="Delete note"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -252,10 +251,10 @@ export function Sidebar() {
       <div className="p-4 border-t border-border space-y-2">
         <Button
           variant="ghost"
-          className="w-full justify-start"
+          className={`w-full justify-start ${isSettingsActive() ? 'bg-primary-50 text-primary-600 border-r-2 border-primary-500' : ''}`}
           onClick={() => router.push('/app/settings')}
         >
-          <Settings className="h-4 w-4 mr-3" />
+          <Settings className={`h-4 w-4 mr-3 ${isSettingsActive() ? 'text-primary-600' : ''}`} />
           {sidebarOpen && 'Settings'}
         </Button>
         

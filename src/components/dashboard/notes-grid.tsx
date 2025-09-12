@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useStore } from '@/lib/store'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -7,7 +8,6 @@ import { Badge } from '@/components/ui/badge'
 import { formatDate, truncateText } from '@/lib/utils'
 import {
     Pin,
-    MoreVertical,
     Star,
     Trash2,
     Edit3,
@@ -17,16 +17,10 @@ import {
     WifiOff,
     Archive
 } from 'lucide-react'
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import Link from 'next/link'
 import type { Note } from '@/types'
 import { cn } from '@/lib/utils'
+import { ConfirmationModal } from '@/components/ui/confirmation-modal'
 
 interface NoteCardProps {
     note: Note
@@ -36,80 +30,85 @@ interface NoteCardProps {
 }
 
 function NoteCard({ note, onPin, onDelete, onArchive }: NoteCardProps) {
-    return (
-        <Card className={cn(
-            "group hover:shadow-md transition-all duration-200 cursor-pointer",
-            note.pinned && "ring-2 ring-primary-200 bg-primary-50/50"
-        )}>
-            <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center space-x-2">
-                        {note.pinned && (
-                            <Pin className="h-4 w-4 text-primary-500" />
-                        )}
-                        {note.dirty && (
-                            <div className="flex items-center text-orange-500">
-                                <WifiOff className="h-3 w-3" />
-                            </div>
-                        )}
-                    </div>
+    const [showDeleteModal, setShowDeleteModal] = useState(false)
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+    const handleDelete = async () => {
+        await onDelete(note.$id)
+    }
+
+    return (
+        <>
+            <Card className={cn(
+                "group hover:shadow-md transition-all duration-200 cursor-pointer",
+                note.pinned && "ring-2 ring-primary-200 bg-primary-50/50"
+            )}>
+                <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                            {note.pinned && (
+                                <Pin className="h-4 w-4 text-primary-500" />
+                            )}
+                            {note.dirty && (
+                                <div className="flex items-center text-orange-500">
+                                    <WifiOff className="h-3 w-3" />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="opacity-100 hover:bg-gray-100"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <MoreVertical className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem 
+                                className="h-8 w-8 hover:bg-blue-50"
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     window.location.href = `/app/note/${note.$id}`
                                 }}
-                                className="cursor-pointer"
+                                title="Edit note"
                             >
-                                <Edit3 className="mr-2 h-4 w-4" />
-                                Edit Note
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
+                                <Edit3 className="h-4 w-4 text-blue-600" />
+                            </Button>
+                            
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-yellow-50"
                                 onClick={async (e) => {
                                     e.stopPropagation()
                                     await onPin(note.$id)
                                 }}
-                                className="cursor-pointer"
+                                title={note.pinned ? 'Unpin note' : 'Pin note'}
                             >
-                                <Star className="mr-2 h-4 w-4" />
-                                {note.pinned ? 'Unpin' : 'Pin'} Note
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
+                                <Star className={cn("h-4 w-4", note.pinned ? "text-yellow-500 fill-current" : "text-gray-600")} />
+                            </Button>
+                            
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-gray-50"
                                 onClick={async (e) => {
                                     e.stopPropagation()
                                     await onArchive(note.$id)
                                 }}
-                                className="cursor-pointer"
+                                title={note.archived ? 'Unarchive note' : 'Archive note'}
                             >
-                                <Archive className="mr-2 h-4 w-4" />
-                                {note.archived ? 'Unarchive' : 'Archive'} Note
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
-                                onClick={async (e) => {
+                                <Archive className={cn("h-4 w-4", note.archived ? "text-gray-500 fill-current" : "text-gray-600")} />
+                            </Button>
+                            
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-red-50"
+                                onClick={(e) => {
                                     e.stopPropagation()
-                                    await onDelete(note.$id)
+                                    setShowDeleteModal(true)
                                 }}
+                                title="Delete note"
                             >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete Note
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                        </div>
+                    </div>
 
                 <Link href={`/app/note/${note.$id}`} className="block">
                     <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
@@ -153,6 +152,18 @@ function NoteCard({ note, onPin, onDelete, onArchive }: NoteCardProps) {
                 )}
             </CardFooter>
         </Card>
+
+        <ConfirmationModal
+            isOpen={showDeleteModal}
+            onClose={() => setShowDeleteModal(false)}
+            onConfirm={handleDelete}
+            title="Delete Note"
+            description={`Are you sure you want to delete "${note.title}"? This action cannot be undone.`}
+            confirmText="Delete"
+            cancelText="Cancel"
+            variant="destructive"
+        />
+        </>
     )
 }
 
@@ -216,33 +227,62 @@ export function NotesGrid({ notes: propNotes }: NotesGridProps = {}) {
                                         </div>
                                     </div>
 
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
-                                            <Button variant="ghost" size="icon">
-                                                <MoreVertical className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={async (e) => {
+                                    <div className="flex items-center space-x-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 hover:bg-blue-50"
+                                            onClick={(e) => {
+                                                e.preventDefault()
+                                                window.location.href = `/app/note/${note.$id}`
+                                            }}
+                                            title="Edit note"
+                                        >
+                                            <Edit3 className="h-4 w-4 text-blue-600" />
+                                        </Button>
+                                        
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 hover:bg-yellow-50"
+                                            onClick={async (e) => {
                                                 e.preventDefault()
                                                 await togglePin(note.$id)
-                                            }}>
-                                                <Star className="mr-2 h-4 w-4" />
-                                                {note.pinned ? 'Unpin' : 'Pin'} Note
-                                            </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem
-                                                className="text-red-600"
-                                                onClick={async (e) => {
-                                                    e.preventDefault()
-                                                    await deleteNote(note.$id)
-                                                }}
-                                            >
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                Delete Note
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                            }}
+                                            title={note.pinned ? 'Unpin note' : 'Pin note'}
+                                        >
+                                            <Star className={cn("h-4 w-4", note.pinned ? "text-yellow-500 fill-current" : "text-gray-600")} />
+                                        </Button>
+                                        
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 hover:bg-gray-50"
+                                            onClick={async (e) => {
+                                                e.preventDefault()
+                                                await toggleArchive(note.$id)
+                                            }}
+                                            title={note.archived ? 'Unarchive note' : 'Archive note'}
+                                        >
+                                            <Archive className={cn("h-4 w-4", note.archived ? "text-gray-500 fill-current" : "text-gray-600")} />
+                                        </Button>
+                                        
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 hover:bg-red-50"
+                                            onClick={(e) => {
+                                                e.preventDefault()
+                                                // We'll need to add state management for the modal here
+                                                if (confirm(`Are you sure you want to delete "${note.title}"? This action cannot be undone.`)) {
+                                                    deleteNote(note.$id)
+                                                }
+                                            }}
+                                            title="Delete note"
+                                        >
+                                            <Trash2 className="h-4 w-4 text-red-600" />
+                                        </Button>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Link>
