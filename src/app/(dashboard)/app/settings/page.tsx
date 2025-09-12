@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 
 export default function SettingsPage() {
-  const { user, theme, setTheme, setUser } = useStore()
+  const { user, setUser } = useStore()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSaveProfile = async () => {
@@ -103,28 +103,19 @@ export default function SettingsPage() {
             <div>
               <label className="text-sm font-medium text-gray-700">Theme</label>
               <div className="mt-2 flex space-x-2">
-                <Button
-                  variant={theme === 'light' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setTheme('light')}
-                >
+                <Button variant="outline" size="sm" disabled>
                   Light
                 </Button>
-                <Button
-                  variant={theme === 'dark' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setTheme('dark')}
-                >
+                <Button variant="outline" size="sm" disabled>
                   Dark
                 </Button>
-                <Button
-                  variant={theme === 'system' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setTheme('system')}
-                >
+                <Button variant="default" size="sm" disabled>
                   System
                 </Button>
               </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Theme customization coming soon
+              </p>
             </div>
           </CardContent>
         </Card>

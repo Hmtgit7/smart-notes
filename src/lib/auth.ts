@@ -92,7 +92,7 @@ export class AuthService {
 
       // Reset rate limit on successful signup
       rateLimiter.reset(`signup:${email}`);
-      return { success: true, user };
+      return { success: true, user: user as unknown as User };
     } catch (error) {
       console.error("Signup error:", error);
       if (error instanceof AppwriteException) {
