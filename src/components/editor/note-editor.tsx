@@ -54,14 +54,6 @@ export function NoteEditor({ note, onChange, onSave, isSaving }: NoteEditorProps
         onChange({ content: updatedContent, tags })
     }, [content, onChange])
 
-    const handleUpdateTitle = useCallback((newTitle: string) => {
-        setTitle(newTitle)
-        onChange({ title: newTitle })
-    }, [onChange])
-
-    const handleUpdateTags = useCallback((newTags: string[]) => {
-        onChange({ tags: newTags })
-    }, [onChange])
 
     return (
         <div className="h-full flex flex-col">
@@ -156,8 +148,6 @@ export function NoteEditor({ note, onChange, onSave, isSaving }: NoteEditorProps
                         <AIPanel
                             content={content}
                             onInsertContent={handleInsertContent}
-                            onUpdateTitle={handleUpdateTitle}
-                            onUpdateTags={handleUpdateTags}
                         />
                     </TabsContent>
                 </Tabs>

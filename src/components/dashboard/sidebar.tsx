@@ -64,11 +64,11 @@ export function Sidebar() {
   const displayNotes = sidebarSearchQuery ? sidebarFilteredNotes() : recentNotes
 
     return (
-    <div className={`bg-white border-r border-gray-200 flex flex-col transition-all duration-300 fixed left-0 top-0 h-full z-40 ${
+    <div className={`bg-white border-r border-border flex flex-col transition-all duration-300 fixed left-0 top-0 h-full z-40 ${
       sidebarOpen ? 'w-64' : 'w-16'
     }`}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-5 border-b border-border">
         <div className="flex items-center justify-between">
           {sidebarOpen && (
             <h1 className="text-lg font-semibold text-gray-900">Smart Notes</h1>
@@ -86,7 +86,7 @@ export function Sidebar() {
 
       {/* User Info */}
       {sidebarOpen && user && (
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-border">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
               <span className="text-white text-sm font-medium">
@@ -107,7 +107,7 @@ export function Sidebar() {
 
       {/* Search */}
       {sidebarOpen && (
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-border">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
@@ -115,14 +115,14 @@ export function Sidebar() {
               placeholder="Search notes..."
               value={sidebarSearchQuery}
               onChange={(e) => setSidebarSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
         </div>
       )}
 
       {/* Quick Actions */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-border">
         <Button
           onClick={handleNewNote}
           className="w-full bg-primary-500 hover:bg-primary-600 text-white"
@@ -250,7 +250,7 @@ export function Sidebar() {
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200 space-y-2">
+      <div className="p-4 border-t border-border space-y-2">
         <Button
           variant="ghost"
           className="w-full justify-start"

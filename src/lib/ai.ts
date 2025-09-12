@@ -134,6 +134,19 @@ Make sure the enhanced content is well-formatted and ready to use.`
       return []
     }
   }
+
+  async generateFromPrompt(prompt: string): Promise<string> {
+    try {
+      const enhancedPrompt = `You are a helpful writing assistant. Please write content based on the following request. Make it well-structured, clear, and ready to use:\n\n${prompt}`
+      
+      const result = await this.model.generateContent(enhancedPrompt)
+      const response = await result.response
+      return response.text().trim()
+    } catch (error) {
+      console.error('Prompt generation error:', error)
+      throw new Error('Failed to generate content from prompt')
+    }
+  }
 }
 
 export const aiService = new AIService()

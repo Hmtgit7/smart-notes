@@ -51,7 +51,7 @@ export function TopBar() {
 
 
     return (
-        <header className="bg-white border-b border-gray-200 px-6 py-4 w-full">
+        <header className="bg-white border-b border-border px-6 py-4 w-full">
             <div className="flex items-center justify-between w-full">
                 {/* Search - positioned to account for fixed sidebar */}
                 <div className={`flex-1 max-w-lg transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-16'}`}>

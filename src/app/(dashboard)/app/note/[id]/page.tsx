@@ -138,7 +138,7 @@ export default function NotePage() {
     return (
         <div className="h-full flex flex-col bg-white">
             {/* Editor Header */}
-            <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200">
+            <div className="flex-shrink-0 px-6 py-4 border-b border-border">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                         <Button variant="ghost" size="icon" onClick={handleBack}>
