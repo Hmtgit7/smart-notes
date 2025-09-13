@@ -123,14 +123,6 @@ export class AuthService {
       );
 
       // Create session
-      // First, try to delete any existing session
-      try {
-        await account.deleteSession("current");
-        console.log('Existing session deleted during signup');
-      } catch (deleteError) {
-        console.log('No existing session to delete during signup or error:', deleteError);
-      }
-      
       await account.createEmailSession(email, password);
 
       // Get account data and save session to localStorage
@@ -142,18 +134,21 @@ export class AuthService {
         timestamp: Date.now()
       });
 
-      // Create user document in database
+      // Create user document in database with the working field combination
       const user = await databases.createDocument(
         DATABASE_ID,
         COLLECTIONS.USERS,
         ID.unique(),
         {
           userId: account_response.$id,
-          name: name.trim(), // Set the name field
-          email: email,
-          plan: "free",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          title: name.trim(),
+          content: "",
+          tags: [],
+          pinned: false,
+          archived: false,
+          attachments: [],
+          version: 1,
+          isDeleted: false,
         },
       );
 
@@ -162,6 +157,7 @@ export class AuthService {
       return { success: true, user: user as unknown as User };
     } catch (error) {
       console.error("Signup error:", error);
+      
       if (error instanceof AppwriteException) {
         if (error.code === 409) {
           return { success: false, error: "An account with this email already exists." };
@@ -415,8 +411,16 @@ export class AuthService {
             ID.unique(),
             {
               userId: accountData.$id,
+              title: accountData.name || "User", // Add required title field
               name: accountData.name || "User", // Set the name field
               email: accountData.email || "",
+              content: "", // Add required content field (empty for user profiles)
+              tags: [], // Add required tags field
+              pinned: false, // Add required pinned field
+              archived: false, // Add required archived field
+              attachments: [], // Add required attachments field
+              version: 1, // Add required version field
+              isDeleted: false, // Add required isDeleted field
               plan: "free",
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
