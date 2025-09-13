@@ -9,6 +9,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Save, Share, MoreHorizontal } from 'lucide-react'
 import type { Note } from '@/types'
+import { toast } from '@/hooks/use-toast'
 // import { debounce } from '@/lib/utils'
 
 // Simple debounce function
@@ -40,9 +41,23 @@ export default function NotePage() {
             if (savedNote) {
                 // Update the store with the saved note
                 updateStoreNote(noteId, savedNote)
+                
+                // Show success toast for auto-save
+                toast({
+                    title: "Auto-saved",
+                    description: "Your changes have been saved automatically.",
+                    variant: "success",
+                })
             }
         } catch (error) {
             console.error('Error saving note:', error)
+            
+            // Show error toast
+            toast({
+                title: "Save failed",
+                description: "Failed to save your changes. Please try again.",
+                variant: "destructive",
+            })
         } finally {
             setIsSaving(false)
         }
@@ -104,11 +119,26 @@ export default function NotePage() {
             const savedNote = await notesService.updateNote(note.$id, note)
             if (savedNote) {
                 updateStoreNote(note.$id, savedNote)
+                
+                // Show success toast
+                toast({
+                    title: "Note saved",
+                    description: `"${note.title}" has been saved successfully.`,
+                    variant: "success",
+                })
+                
                 // Navigate to notes list after successful save
                 router.push('/app')
             }
         } catch (error) {
             console.error('Error manually saving note:', error)
+            
+            // Show error toast
+            toast({
+                title: "Save failed",
+                description: "Failed to save the note. Please try again.",
+                variant: "destructive",
+            })
         } finally {
             setIsSaving(false)
         }

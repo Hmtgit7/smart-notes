@@ -35,7 +35,8 @@ export function Sidebar() {
     setSidebarSearchQuery,
     sidebarSearchQuery,
     setView,
-    view
+    view,
+    deleteNote
   } = useStore()
 
   const handleLogout = async () => {
@@ -231,8 +232,9 @@ export function Sidebar() {
                         className="h-6 w-6 hover:bg-red-100 text-red-600 hover:text-red-700"
                         onClick={(e) => {
                           e.stopPropagation()
-                          // Add delete functionality here
-                          console.log('Delete note:', note.$id)
+                          if (confirm(`Are you sure you want to delete "${note.title}"? This action cannot be undone.`)) {
+                            deleteNote(note.$id)
+                          }
                         }}
                         title="Delete note"
                       >

@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import type { User, Note, AppState } from "@/types";
 import { notesService } from "./notes";
 import { authService } from "./auth";
+import { toast } from "@/hooks/use-toast";
 
 interface NotesStore extends AppState {
   // Actions
@@ -68,12 +69,24 @@ export const useStore = create<NotesStore>()(
       // Notes Actions
       setNotes: (notes) => set({ notes }),
 
-      addNote: (note) =>
+      addNote: (note) => {
         set((state) => ({
           notes: [note, ...state.notes],
-        })),
+        }));
+        
+        // Show success toast
+        toast({
+          title: "Note created",
+          description: `"${note.title}" has been created successfully.`,
+          variant: "success",
+        });
+      },
 
-      updateNote: (id, updates) =>
+      updateNote: (id, updates) => {
+        const state = get();
+        const note = state.notes.find(n => n.$id === id);
+        const noteTitle = note?.title || 'Note';
+        
         set((state) => ({
           notes: state.notes.map((note) =>
             note.$id === id
@@ -88,9 +101,23 @@ export const useStore = create<NotesStore>()(
                   updatedAt: new Date().toISOString(),
                 }
               : state.currentNote,
-        })),
+        }));
+        
+        // Show success toast for save operations
+        if (updates.title || updates.content) {
+          toast({
+            title: "Note saved",
+            description: `"${noteTitle}" has been saved successfully.`,
+            variant: "success",
+          });
+        }
+      },
 
       deleteNote: async (id) => {
+        const state = get();
+        const note = state.notes.find(n => n.$id === id);
+        const noteTitle = note?.title || 'Note';
+        
         try {
           // Delete in Appwrite
           const success = await notesService.deleteNote(id);
@@ -108,9 +135,23 @@ export const useStore = create<NotesStore>()(
                   : note,
               ),
             }));
+            
+            // Show success toast
+            toast({
+              title: "Note deleted",
+              description: `"${noteTitle}" has been moved to trash.`,
+              variant: "success",
+            });
           }
         } catch (error) {
           console.error('Error deleting note:', error);
+          
+          // Show error toast
+          toast({
+            title: "Delete failed",
+            description: "Failed to delete the note. Please try again.",
+            variant: "destructive",
+          });
         }
       },
 
@@ -118,6 +159,9 @@ export const useStore = create<NotesStore>()(
         const state = get();
         const note = state.notes.find(n => n.$id === id);
         if (!note) return;
+
+        const noteTitle = note.title || 'Note';
+        const wasPinned = note.pinned;
 
         try {
           // Update in Appwrite
@@ -132,9 +176,23 @@ export const useStore = create<NotesStore>()(
                 note.$id === id ? updatedNote : note,
               ),
             }));
+            
+            // Show success toast
+            toast({
+              title: updatedNote.pinned ? "Note pinned" : "Note unpinned",
+              description: `"${noteTitle}" has been ${updatedNote.pinned ? 'pinned' : 'unpinned'}.`,
+              variant: "success",
+            });
           }
         } catch (error) {
           console.error('Error toggling pin:', error);
+          
+          // Show error toast
+          toast({
+            title: "Pin failed",
+            description: `Failed to ${wasPinned ? 'unpin' : 'pin'} the note. Please try again.`,
+            variant: "destructive",
+          });
         }
       },
 
@@ -142,6 +200,9 @@ export const useStore = create<NotesStore>()(
         const state = get();
         const note = state.notes.find(n => n.$id === id);
         if (!note) return;
+
+        const noteTitle = note.title || 'Note';
+        const wasArchived = note.archived;
 
         try {
           // Update in Appwrite
@@ -156,9 +217,23 @@ export const useStore = create<NotesStore>()(
                 note.$id === id ? updatedNote : note,
               ),
             }));
+            
+            // Show success toast
+            toast({
+              title: updatedNote.archived ? "Note archived" : "Note unarchived",
+              description: `"${noteTitle}" has been ${updatedNote.archived ? 'archived' : 'unarchived'}.`,
+              variant: "success",
+            });
           }
         } catch (error) {
           console.error('Error toggling archive:', error);
+          
+          // Show error toast
+          toast({
+            title: "Archive failed",
+            description: `Failed to ${wasArchived ? 'unarchive' : 'archive'} the note. Please try again.`,
+            variant: "destructive",
+          });
         }
       },
 
