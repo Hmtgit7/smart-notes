@@ -8,7 +8,7 @@ import { motion } from 'framer-motion'
 
 export function Hero() {
     return (
-        <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-emerald-50">
+        <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-emerald-50 pt-16">
             {/* Background decoration */}
             <div className="absolute inset-0 overflow-hidden">
                 <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-primary-100 opacity-60"></div>

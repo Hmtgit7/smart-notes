@@ -6,6 +6,7 @@ import { Testimonials } from '@/components/landing/testimonials'
 import { Pricing } from '@/components/landing/pricing'
 import { CTA } from '@/components/landing/cta'
 import { Footer } from '@/components/landing/footer'
+import { ScrollToTop } from '@/components/ui/scroll-to-top'
 
 export default function HomePage() {
   return (
@@ -16,8 +17,9 @@ export default function HomePage() {
       <HowItWorks />
       {/* <Testimonials /> */}
       <Pricing />
-      {/* <CTA /> */}
+      <CTA />
       <Footer />
+      <ScrollToTop />
     </main>
   )
 }

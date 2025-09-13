@@ -20,12 +20,12 @@ const footerLinks = {
   product: [
     { name: "Features", href: "#features" },
     { name: "Pricing", href: "#pricing" },
+    { name: "How it Works", href: "#how-it-works" },
     { name: "API", href: "#api" },
-    { name: "Integrations", href: "#integrations" },
-    { name: "Changelog", href: "#changelog" }
+    { name: "Integrations", href: "#integrations" }
   ],
   company: [
-    { name: "About", href: "#about" },
+    { name: "About Us", href: "#about" },
     { name: "Blog", href: "#blog" },
     { name: "Careers", href: "#careers" },
     { name: "Press", href: "#press" },
@@ -61,6 +61,13 @@ const features = [
 ]
 
 export function Footer() {
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
   return (
     <footer className="bg-gray-900 text-white">
       {/* Newsletter Section */}
@@ -166,12 +173,21 @@ export function Footer() {
               <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link.name}>
-                    <Link
-                      href={link.href}
-                      className="text-gray-400 hover:text-white transition-colors"
-                    >
-                      {link.name}
-                    </Link>
+                    {link.href.startsWith('#') ? (
+                      <button
+                        onClick={() => scrollToSection(link.href.substring(1))}
+                        className="text-gray-400 hover:text-white transition-colors text-left"
+                      >
+                        {link.name}
+                      </button>
+                    ) : (
+                      <Link
+                        href={link.href}
+                        className="text-gray-400 hover:text-white transition-colors"
+                      >
+                        {link.name}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>

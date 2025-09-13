@@ -3,6 +3,7 @@
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
 import { Check, Star, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -66,7 +67,7 @@ const plans = [
 
 export function Pricing() {
   return (
-    <section className="py-24 bg-gradient-to-b from-gray-50 to-white">
+    <section id="pricing" className="py-24 bg-gradient-to-b from-gray-50 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -136,15 +137,17 @@ export function Pricing() {
                   ))}
                 </ul>
 
-                <Button 
-                  className={`w-full py-3 ${
-                    plan.popular 
-                      ? 'bg-primary-600 hover:bg-primary-700 text-white' 
-                      : 'bg-gray-900 hover:bg-gray-800 text-white'
-                  }`}
-                >
-                  {plan.cta}
-                </Button>
+                <Link href={plan.name === "Enterprise" ? "#contact" : "/auth"} className="w-full">
+                  <Button 
+                    className={`w-full py-3 ${
+                      plan.popular 
+                        ? 'bg-primary-600 hover:bg-primary-700 text-white' 
+                        : 'bg-gray-900 hover:bg-gray-800 text-white'
+                    }`}
+                  >
+                    {plan.cta}
+                  </Button>
+                </Link>
               </Card>
             </motion.div>
           ))}

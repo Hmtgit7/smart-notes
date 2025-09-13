@@ -2,6 +2,8 @@
 
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import { 
   PenTool, 
   Brain, 
@@ -41,7 +43,7 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section className="py-24 bg-gradient-to-b from-gray-50 to-white">
+    <section id="how-it-works" className="py-24 bg-gradient-to-b from-gray-50 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -237,10 +239,12 @@ export function HowItWorks() {
             <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
               Join thousands of professionals who have already transformed their note-taking workflow.
             </p>
-            <button className="inline-flex items-center px-8 py-4 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors">
-              Start Your Free Trial
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </button>
+            <Link href="/auth">
+              <Button className="inline-flex items-center px-8 py-4 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors">
+                Start Your Free Trial
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         </motion.div>
       </div>
