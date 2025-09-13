@@ -32,14 +32,20 @@ export function generateId() {
   );
 }
 
+export function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, '');
+}
+
 export function truncateText(text: string, maxLength: number = 100) {
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength) + "...";
+  const cleanText = stripHtml(text);
+  if (cleanText.length <= maxLength) return cleanText;
+  return cleanText.substring(0, maxLength) + "...";
 }
 
 export function extractTags(content: string): string[] {
+  const cleanContent = stripHtml(content);
   const tagRegex = /#(\w+)/g;
-  const matches = content.match(tagRegex);
+  const matches = cleanContent.match(tagRegex);
   return matches ? matches.map((tag) => tag.substring(1)) : [];
 }
 

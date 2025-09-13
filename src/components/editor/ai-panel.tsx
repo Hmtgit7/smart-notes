@@ -16,18 +16,25 @@ export function AIPanel({ content, onInsertContent }: AIPanelProps) {
   const [prompt, setPrompt] = useState('')
   const [generatedText, setGeneratedText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [showActions, setShowActions] = useState(false)
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return
 
     setIsLoading(true)
+    setShowActions(false)
     try {
       // Use the AI service to generate content based on the prompt
       const result = await aiService.generateFromPrompt(prompt)
       setGeneratedText(result)
+      setShowActions(true)
     } catch (error) {
       console.error('AI generation failed:', error)
-      setGeneratedText('Sorry, AI generation failed. Please try again.')
+      const errorMessage = error.message?.includes('rate limits') 
+        ? 'AI service is temporarily unavailable due to rate limits. Please try again in a few minutes.'
+        : 'Sorry, AI generation failed. Please try again.'
+      setGeneratedText(errorMessage)
+      setShowActions(false)
     } finally {
       setIsLoading(false)
     }
@@ -38,7 +45,14 @@ export function AIPanel({ content, onInsertContent }: AIPanelProps) {
       onInsertContent(generatedText)
       setGeneratedText('')
       setPrompt('')
+      setShowActions(false)
     }
+  }
+
+  const handleCancel = () => {
+    setGeneratedText('')
+    setPrompt('')
+    setShowActions(false)
   }
 
   return (
@@ -94,12 +108,23 @@ export function AIPanel({ content, onInsertContent }: AIPanelProps) {
                 <Sparkles className="h-5 w-5 text-emerald-600" />
                 Generated Content
               </CardTitle>
-              <Button
-                onClick={handleInsert}
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
-                Insert into Note
-              </Button>
+              {showActions && (
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleCancel}
+                    variant="outline"
+                    className="border-red-300 text-red-600 hover:bg-red-50"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleInsert}
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    Insert into Note
+                  </Button>
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent>

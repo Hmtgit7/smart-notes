@@ -11,6 +11,8 @@ import { Pin, Tag as TagIcon, Calendar, Hash, Sparkles, Save } from 'lucide-reac
 import type { Note } from '@/types'
 import { formatDateTime } from '@/lib/utils'
 import { AIPanel } from './ai-panel'
+import { RichTextEditor } from './rich-text-editor'
+import { AISuggestions } from './ai-suggestions'
 
 interface NoteEditorProps {
     note: Note
@@ -136,19 +138,33 @@ export function NoteEditor({ note, onChange, onSave, isSaving }: NoteEditorProps
                     </TabsList>
                     
                     <TabsContent value="editor" className="flex-1 mt-4">
-                        <Textarea
-                            value={content}
-                            onChange={handleContentChange}
+                        <RichTextEditor
+                            content={content}
+                            onChange={(newContent) => {
+                                setContent(newContent)
+                                const tags = extractTags(newContent)
+                                onChange({ content: newContent, tags })
+                            }}
                             placeholder="Start writing your note..."
-                            className="h-full resize-none border-none shadow-none text-base leading-relaxed focus-visible:ring-0"
+                            className="h-full border rounded-lg"
                         />
                     </TabsContent>
                     
                     <TabsContent value="ai" className="flex-1 mt-4 overflow-auto">
-                        <AIPanel
-                            content={content}
-                            onInsertContent={handleInsertContent}
-                        />
+                        <div className="space-y-6">
+                            <AIPanel
+                                content={content}
+                                onInsertContent={handleInsertContent}
+                            />
+                            <AISuggestions
+                                content={content}
+                                onApplySuggestion={(suggestion) => {
+                                    setContent(suggestion)
+                                    const tags = extractTags(suggestion)
+                                    onChange({ content: suggestion, tags })
+                                }}
+                            />
+                        </div>
                     </TabsContent>
                 </Tabs>
             </div>
